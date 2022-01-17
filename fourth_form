@@ -1,0 +1,77 @@
+import sqlite3
+import sys
+
+from PyQt5 import uic
+from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog, QPushButton
+
+
+class Frames(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(200, 100, 1000, 1000)
+        self.setWindowTitle('Добавление текста главы')
+        uic.loadUi('des4.ui', self)
+        self.add_frame.clicked.connect(self.adding_frame)
+        self.button_f4 = QPushButton(self)
+        self.button_f4.move(20, 40)
+        self.button_f4.resize(130, 30)
+        self.button_f4.setText("Для разработчиков")
+        self.button_f4.clicked.connect(self.checking_f4)
+        self.hiding_fourth()
+
+    def checking_f4(self):
+        name, ok_pressed = QInputDialog.getText(self, "Введите логин", "Логин")
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM devs""").fetchall()
+        con.close()
+        f = False
+        for elem in result:
+            if name == elem[0]:
+                if ok_pressed:
+                    passw, ok_pressed = QInputDialog.getText(self, 'Введите пароль', 'Пароль')
+                    if ok_pressed:
+                        if passw == elem[1]:
+                            f = True
+                            break
+        if f:
+            self.button_f4.hide()
+            self.showing_fourth()
+
+    def adding_frame(self):
+        chapt_name = self.name_of_chapter.text()
+        loc = self.frame_location.text()
+        frame_text = self.frame_text.toPlainText()
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute(
+            """INSERT INTO chapters_text(name_chapter, text_of_frame, location_of_frame) 
+            VALUES(?, ?, ?)""", (chapt_name, frame_text, loc)).fetchall()
+        con.commit()
+        con.close()
+        self.frame_text.clear()
+
+    def hiding_fourth(self):
+        self.label_6.hide()
+        self.name_of_chapter.hide()
+        self.label.hide()
+        self.label_4.hide()
+        self.frame_location.hide()
+        self.frame_text.hide()
+        self.add_frame.hide()
+
+    def showing_fourth(self):
+        self.label_6.show()
+        self.name_of_chapter.show()
+        self.label.show()
+        self.frame_location.show()
+        self.frame_text.show()
+        self.add_frame.show()
+        self.label_4.show()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    fr = Frames()
+    fr.show()
+    sys.exit(app.exec())
