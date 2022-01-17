@@ -1,0 +1,92 @@
+import sqlite3
+import sys
+from PyQt5 import uic
+
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
+from PyQt5.QtWidgets import QInputDialog
+from second_dev_form import RedactMainInformation
+from third_dev_form import Locations
+from fourth_dev_form import Frames
+
+
+class MainInf(QWidget):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('des.ui', self)
+        self.setWindowTitle('Добавить главу')
+        self.setGeometry(50, 50, 838, 734)
+        self.button_1 = QPushButton(self)
+        self.button_1.move(20, 40)
+        self.button_1.setText("Для разработчиков")
+        self.button_1.clicked.connect(self.checking)
+        self.hiding()
+        self.sr.clicked.connect(self.savee)
+
+    def checking(self):
+        name, ok_pressed = QInputDialog.getText(self, "Введите логин", "Логин")
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM devs""").fetchall()
+        con.close()
+        f = False
+        for elem in result:
+            if name == elem[0]:
+                if ok_pressed:
+                    passw, ok_pressed = QInputDialog.getText(self, 'Введите пароль', 'Пароль')
+                    if ok_pressed:
+                        if passw == elem[1]:
+                            f = True
+                            break
+        if f:
+            self.button_1.hide()
+            self.showing()
+
+    def hiding(self):
+        self.label1.hide()
+        self.label2.hide()
+        self.label3.hide()
+        self.label4.hide()
+        self.label5.hide()
+        self.chapter_name.hide()
+        self.chapter_authors.hide()
+        self.chapter_locations.hide()
+        self.edit1.hide()
+        self.sr.hide()
+
+    def showing(self):
+        self.label1.show()
+        self.label2.show()
+        self.label3.show()
+        self.label4.show()
+        self.label5.show()
+        self.chapter_name.show()
+        self.chapter_authors.show()
+        self.chapter_locations.show()
+        self.edit1.show()
+        self.sr.show()
+
+    def savee(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute(
+            """INSERT INTO main_chapter_information(name, authors, locations, description) VALUES(?, ?, ?, ?)""",
+            (self.chapter_name.text(), self.chapter_authors.text(), self.chapter_locations.text(),
+             self.edit1.toPlainText(),)).fetchall()
+        con.commit()
+        con.close()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    mi = MainInf()
+    mi.show()
+    app2 = QApplication(sys.argv)
+    rmi = RedactMainInformation()
+    rmi.show()
+    app3 = QApplication(sys.argv)
+    lo = Locations()
+    lo.show()
+    app4 = QApplication
+    fr = Frames()
+    fr.show()
+    sys.exit(app.exec())
