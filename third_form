@@ -1,0 +1,100 @@
+import sqlite3
+import sys
+
+from PyQt5 import uic
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QFileDialog, QColorDialog, QInputDialog, QPushButton
+
+SCREEN_SIZE = [400, 400]
+
+
+class Locations(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(200, 100, *SCREEN_SIZE)
+        self.setWindowTitle('Отображение картинки')
+        self.image = QLabel(self)
+        uic.loadUi('des3.ui', self)
+        self.opening.clicked.connect(self.opening_func)
+        self.fname = ''
+        self.color = ''
+        self.color_finding.clicked.connect(self.color_finding_func)
+        self.label_3.hide()
+        self.adding.clicked.connect(self.adding_func)
+        self.button_f3 = QPushButton(self)
+        self.button_f3.move(20, 40)
+        self.button_f3.resize(130, 30)
+        self.button_f3.setText("Для разработчиков")
+        self.button_f3.clicked.connect(self.checking_f3)
+        self.hiding_third()
+
+    def checking_f3(self):
+        name, ok_pressed = QInputDialog.getText(self, "Введите логин", "Логин")
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM devs""").fetchall()
+        con.close()
+        f = False
+        for elem in result:
+            if name == elem[0]:
+                if ok_pressed:
+                    passw, ok_pressed = QInputDialog.getText(self, 'Введите пароль', 'Пароль')
+                    if ok_pressed:
+                        if passw == elem[1]:
+                            f = True
+                            break
+        if f:
+            self.button_f3.hide()
+            self.showing_third()
+
+    def opening_func(self):
+        self.fname = QFileDialog.getOpenFileName(self, 'Выбрать картинку', '')[0]
+        pixmap = QPixmap(self.fname)
+        self.image.move(50, 120)
+        self.image.resize(500, 500)
+        self.image.setPixmap(pixmap)
+
+    def adding_func(self):
+        n = self.lineEdit.text()
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        r0 = cur.execute('''SELECT location_id FROM locations''').fetchall()
+        if r0:
+            counter = int(r0[-1][-1]) + 1
+        else:
+            counter = 1
+        cur.execute(
+            """INSERT INTO locations(location_name, location_id, color_txt, location_photo) VALUES(?, ?, ?, ?)""",
+            (n, str(counter), self.color.name(), self.fname)).fetchall()
+        con.commit()
+        con.close()
+
+    def color_finding_func(self):
+        self.label_3.show()
+        self.color = QColorDialog.getColor()
+        if self.color.isValid():
+            self.label_3.setStyleSheet(
+                "color: {}".format(self.color.name()))
+
+    def hiding_third(self):
+        self.label.hide()
+        self.lineEdit.hide()
+        self.opening.hide()
+        self.label_2.hide()
+        self.color_finding.hide()
+        self.adding.hide()
+
+    def showing_third(self):
+        self.label.show()
+        self.lineEdit.show()
+        self.opening.show()
+        self.label_2.show()
+        self.color_finding.show()
+        self.adding.show()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    lo = Locations()
+    lo.show()
+    sys.exit(app.exec())
