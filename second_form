@@ -1,0 +1,127 @@
+import sqlite3
+import sys
+from PyQt5 import uic
+
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QInputDialog
+
+
+class RedactMainInformation(QWidget):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('des2.ui', self)
+        self.redact.clicked.connect(self.load_from_bd)
+        self.change_name.clicked.connect(self.changing_name)
+        self.name_chapter_now = self.namef2.text()
+        self.label_2.hide()
+        self.change_authors.clicked.connect(self.changing_authors)
+        self.change_locations.clicked.connect(self.changing_locations)
+        self.change_description.clicked.connect(self.changing_description)
+        self.setWindowTitle('Отредактировать главу')
+        self.hiding_second()
+        self.button_f2 = QPushButton(self)
+        self.button_f2.move(20, 40)
+        self.button_f2.setText("Для разработчиков")
+        self.button_f2.clicked.connect(self.checking_f2)
+
+    def checking_f2(self):
+        name, ok_pressed = QInputDialog.getText(self, "Введите логин", "Логин")
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM devs""").fetchall()
+        con.close()
+        f = False
+        for elem in result:
+            if name == elem[0]:
+                if ok_pressed:
+                    passw, ok_pressed = QInputDialog.getText(self, 'Введите пароль', 'Пароль')
+                    if ok_pressed:
+                        if passw == elem[1]:
+                            f = True
+                            break
+        if f:
+            self.button_f2.hide()
+            self.showing_second()
+
+    def load_from_bd(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM main_chapter_information""").fetchall()
+        con.close()
+        f = False
+        for i in result:
+            if self.namef2.text() == i[0]:
+                self.line1.setText(i[0])
+                self.name_chapter_now = i[0]
+                self.line2.setText(i[1])
+                self.line3.setText(i[2])
+                self.editf2.setText(i[3])
+                f = True
+                self.label_2.hide()
+                break
+        if not f:
+            self.label_2.show()
+
+    def changing_name(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute('''UPDATE main_chapter_information SET name = ? WHERE name = ?''',
+                    (self.line1.text(), self.name_chapter_now,)).fetchall()
+        con.commit()
+        con.close()
+
+    def changing_authors(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute('''UPDATE main_chapter_information SET authors = ? WHERE name = ?''',
+                    (self.line2.text(), self.name_chapter_now,)).fetchall()
+        con.commit()
+        con.close()
+
+    def changing_locations(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute('''UPDATE main_chapter_information SET locations = ? WHERE name = ?''',
+                    (self.line3.text(), self.name_chapter_now,)).fetchall()
+        con.commit()
+        con.close()
+
+    def changing_description(self):
+        con = sqlite3.connect('pygame_project.sqlite')
+        cur = con.cursor()
+        cur.execute('''UPDATE main_chapter_information SET description = ? WHERE name = ?''',
+                    (self.editf2.toPlainText(), self.name_chapter_now,)).fetchall()
+        con.commit()
+        con.close()
+
+    def hiding_second(self):
+        self.namef2.hide()
+        self.label.hide()
+        self.redact.hide()
+        self.change_name.hide()
+        self.change_authors.hide()
+        self.change_locations.hide()
+        self.change_description.hide()
+        self.editf2.hide()
+        self.line3.hide()
+        self.line2.hide()
+        self.line1.hide()
+
+    def showing_second(self):
+        self.namef2.show()
+        self.label.show()
+        self.redact.show()
+        self.change_name.show()
+        self.change_authors.show()
+        self.change_locations.show()
+        self.change_description.show()
+        self.editf2.show()
+        self.line3.show()
+        self.line2.show()
+        self.line1.show()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    rm = RedactMainInformation()
+    rm.show()
+    sys.exit(app.exec())
